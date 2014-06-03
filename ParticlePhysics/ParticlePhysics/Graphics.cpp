@@ -18,6 +18,8 @@ Graphics::Graphics(void)
 	m_DepthStencilState = nullptr;
 	m_DepthStencilView = nullptr;
 	m_VSyncEnabled = false;
+
+	m_WrapperFactory = nullptr;
 }
 
 
@@ -147,11 +149,63 @@ void Graphics::initialize(HWND p_Hwnd, int p_ScreenWidth, int p_ScreenHeight, bo
 	{
 		throw GraphicsException("Error when creating the rasterizer state", __LINE__,__FILE__);
 	}
+
+	WrapperFactory::initialize(m_Device, m_DeviceContext);
+
+	m_WrapperFactory = WrapperFactory::getInstance();
+
+	D3D11_VIEWPORT viewport;
+
+	viewport.Width = 1280.f;
+	viewport.Height = 720.f;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	m_DeviceContext->RSSetViewports(1, &viewport);
 }
 
 void Graphics::shutdown()
 {
+	SAFE_RELEASE(m_Sampler);
+	SAFE_RELEASE(m_RasterState);
+	SAFE_RELEASE(m_DepthStencilView);
+	SAFE_RELEASE(m_DepthStencilState);
+	SAFE_RELEASE(m_DepthStencilBuffer);
+	SAFE_RELEASE(m_RenderTargetView);
+	SAFE_RELEASE(m_DeviceContext);
+	SAFE_RELEASE(m_Device);
+	SAFE_RELEASE(m_SwapChain);
 
+	SAFE_SHUTDOWN(m_WrapperFactory);
+}
+
+void Graphics::Begin(float color[4])
+{
+	m_DeviceContext->ClearRenderTargetView(m_RenderTargetView, color);
+
+	m_DeviceContext->ClearDepthStencilView(m_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+}
+
+void Graphics::End(void)
+{
+	if(m_VSyncEnabled)
+	{
+		// Lock to screen refresh rate.
+		m_SwapChain->Present(1, 0);
+	}
+	else
+	{
+		// Present as fast as possible.
+		m_SwapChain->Present(0, 0);
+	}
+}
+
+void Graphics::activateRT()
+{
+	m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, m_DepthStencilView);
+	m_DeviceContext->RSSetState(m_RasterState);
+	m_DeviceContext->OMSetDepthStencilState(m_DepthStencilState,0);
 }
 
 HRESULT Graphics::createDeviceAndSwapChain(HWND p_Hwnd, int p_ScreenWidth, int p_ScreenHeight,
@@ -332,4 +386,9 @@ HRESULT Graphics::createRasterizerState(void)
 	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
 	return m_Device->CreateRasterizerState(&rasterDesc, &m_RasterState);
+}
+
+ID3D11DeviceContext * const Graphics::getDeviceContext()
+{
+	return m_DeviceContext;
 }

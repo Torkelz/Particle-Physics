@@ -1,4 +1,6 @@
 #include "BaseApp.h"
+#include "WrapperFactory.h"
+#include "Utilities.h"
 
 
 const std::string BaseApp::m_GameTitle = "Particles";
@@ -10,6 +12,9 @@ BaseApp::BaseApp(void)
 
 BaseApp::~BaseApp(void)
 {
+	SAFE_DELETE(m_ParticleManager);
+
+	m_Graphics.shutdown();
 }
 
 void BaseApp::init()
@@ -22,13 +27,21 @@ void BaseApp::init()
 
 	bool fullscreen = false;
 	m_Graphics.initialize(m_Window.getHandle(), (int)m_Window.getSize().x, (int)m_Window.getSize().y, fullscreen);
-
+	
 	m_Window.registerCallback(WM_CLOSE, std::bind(&BaseApp::handleWindowClose, this, std::placeholders::_1,
 		std::placeholders::_2, std::placeholders::_3));
 	m_Window.registerCallback(WM_EXITSIZEMOVE, std::bind(&BaseApp::handleWindowExitSizeMove, this,
 		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	m_Window.registerCallback(WM_SIZE, std::bind(&BaseApp::handleWindowSize, this, std::placeholders::_1,
 		std::placeholders::_2, std::placeholders::_3));
+
+	m_ParticleManager = new ParticleManager(&m_Graphics);
+
+	m_ParticleManager->init();
+
+	using namespace DirectX;
+	XMStoreFloat4x4(&m_View, XMMatrixTranspose(XMMatrixLookAtLH(XMVectorSet(0,0,50,0), XMVectorSet(0,0,0,0), XMVectorSet(0,1,0,0))));
+	XMStoreFloat4x4(&m_Projection, XMMatrixTranspose(XMMatrixPerspectiveFovLH( 3.14f * 0.4f , m_Window.getSize().x / m_Window.getSize().y, 1.f, 1000.f)));
 }
 
 void BaseApp::run()
@@ -47,6 +60,16 @@ void BaseApp::run()
 		updateLogic();
 
 		render();*/
+		m_ParticleManager->updateCameraInformation(m_View, m_Projection);
+
+
+		m_ParticleManager->update(m_DeltaTime);
+		float color[] = {0.5f,0.5f,0.5f,1.f};
+		m_Graphics.Begin(color);
+
+		m_ParticleManager->render();
+
+		m_Graphics.End();
 
 		updateDebugInfo();
 	}

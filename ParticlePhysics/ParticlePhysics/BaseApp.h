@@ -1,6 +1,7 @@
 #pragma once
 #include "Window.h"
 #include "Graphics.h"
+#include "ParticleManager.h"
 
 class BaseApp
 {
@@ -19,6 +20,11 @@ private:
 
 	Window m_Window;
 	Graphics m_Graphics;
+	ParticleManager *m_ParticleManager;
+
+	DirectX::XMFLOAT4X4 m_View;
+	DirectX::XMFLOAT4X4 m_Projection;
+
 public:
 	BaseApp(void);
 	~BaseApp(void);

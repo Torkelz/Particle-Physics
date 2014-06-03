@@ -7,6 +7,9 @@
 #include <dxgi.h>
 #include <DirectXMath.h>
 
+#include "WrapperFactory.h"
+
+
 class Graphics
 {
 private:
@@ -32,12 +35,20 @@ private:
 	char m_GraphicsCard[128];
 	int m_GraphicsMemory;
 	bool m_VSyncEnabled;
+
+	WrapperFactory *m_WrapperFactory;
 public:
 	Graphics(void);
 	~Graphics(void);
 
 	void initialize(HWND p_Hwnd, int p_ScreenWidth, int p_ScreenHeight, bool p_Fullscreen);
 	void shutdown();
+
+	void Begin(float color[4]);
+	void End(void);
+	void activateRT();
+
+	ID3D11DeviceContext * const getDeviceContext();
 
 private:
 	HRESULT createDeviceAndSwapChain(HWND p_Hwnd, int p_ScreenWidth, int p_ScreenHeight, bool p_Fullscreen);
