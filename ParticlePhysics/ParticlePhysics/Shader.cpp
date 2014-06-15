@@ -18,6 +18,7 @@ Shader::Shader(void)
 	m_PixelShader = nullptr;
 	m_HullShader = nullptr;
 	m_DomainShader = nullptr;
+	m_ComputeShader = nullptr;
 	m_VertexLayout = nullptr;
 	m_VertexDescription = nullptr;
 }
@@ -29,6 +30,7 @@ Shader::~Shader(void)
 	SAFE_RELEASE(m_PixelShader);
 	SAFE_RELEASE(m_HullShader);
 	SAFE_RELEASE(m_DomainShader);
+	SAFE_RELEASE(m_ComputeShader);
 	SAFE_RELEASE(m_VertexLayout);
 	SAFE_DELETE_ARRAY(m_VertexDescription);
 	m_Device = nullptr;
@@ -122,6 +124,8 @@ void Shader::setShader(void)
 
 	m_DeviceContext->DSSetShader(m_DomainShader, nullptr, 0);
 
+	m_DeviceContext->CSSetShader(m_ComputeShader, nullptr, 0);
+
 	m_DeviceContext->HSSetShader(m_HullShader, nullptr, 0);
 
 }
@@ -147,6 +151,10 @@ void Shader::unSetShader(void)
 	if(m_DomainShader)
 	{
 		m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
+	}
+	if(m_ComputeShader)
+	{
+		m_DeviceContext->CSSetShader(nullptr, nullptr, 0);
 	}
 }
 
@@ -178,6 +186,11 @@ void Shader::setResource(Type p_ShaderType, UINT p_StartSpot, UINT p_NumOfViews,
 	case Type::DOMAIN_SHADER:
 		{
 			m_DeviceContext->DSSetShaderResources(p_StartSpot, p_NumOfViews, &p_ShaderResource);
+			break;
+		}
+	case Type::COMPUTE_SHADER:
+		{
+			m_DeviceContext->CSSetShaderResources(p_StartSpot, p_NumOfViews, &p_ShaderResource);
 			break;
 		}
 	}
@@ -213,6 +226,11 @@ void Shader::setSamplerState(Type p_ShaderType, UINT p_StartSpot, UINT p_NumOfSa
 			m_DeviceContext->DSSetSamplers(p_StartSpot, p_NumOfSamples, &p_SamplerState);
 			break;
 		}
+	case Type::COMPUTE_SHADER:
+		{
+			m_DeviceContext->CSSetSamplers(p_StartSpot, p_NumOfSamples, &p_SamplerState);
+			break;
+		}
 	default:
 		{
 			break;
@@ -243,6 +261,9 @@ void Shader::releaseShader(Shader::Type p_Type)
 		break;
 	case Shader::Type::DOMAIN_SHADER:
 		SAFE_RELEASE(m_DomainShader);
+		break;
+	case Shader::Type::COMPUTE_SHADER:
+		SAFE_RELEASE(m_ComputeShader);
 		break;
 	default:
 		break;
@@ -393,6 +414,12 @@ HRESULT Shader::createShader(ID3DBlob *p_ShaderData)
 		{
 			result = m_Device->CreateDomainShader(p_ShaderData->GetBufferPointer(), p_ShaderData->GetBufferSize(),
 				nullptr, &m_DomainShader);
+			break;
+		}
+	case Type::COMPUTE_SHADER:
+		{
+			result = m_Device->CreateComputeShader(p_ShaderData->GetBufferPointer(), p_ShaderData->GetBufferSize(),
+				nullptr, &m_ComputeShader);
 			break;
 		}
 	default:

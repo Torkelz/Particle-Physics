@@ -117,7 +117,7 @@ HRESULT Buffer::initialize(ID3D11Device *p_Device, ID3D11DeviceContext *p_Device
 	case Usage::CPU_WRITE:
 		{
 			bufferDescription.Usage = D3D11_USAGE_DYNAMIC;
-			bufferDescription.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
+			bufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 			break;
 		}
 	case Usage::CPU_WRITE_DISCARD:
@@ -220,6 +220,7 @@ HRESULT Buffer::setBuffer(UINT32 p_StartSlot)
 			m_DeviceContext->VSSetConstantBuffers(p_StartSlot, numOfBuffers, &m_Buffer);
 			m_DeviceContext->GSSetConstantBuffers(p_StartSlot, numOfBuffers, &m_Buffer);
 			m_DeviceContext->PSSetConstantBuffers(p_StartSlot, numOfBuffers, &m_Buffer);
+			m_DeviceContext->CSSetConstantBuffers(p_StartSlot, numOfBuffers, &m_Buffer);
 			break;
 		}
 	default:

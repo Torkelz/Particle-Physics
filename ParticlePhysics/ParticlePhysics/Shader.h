@@ -13,7 +13,8 @@ public:
 		PIXEL_SHADER = 1,
 		GEOMETRY_SHADER = 2,
 		HULL_SHADER = 3,
-		DOMAIN_SHADER = 4
+		DOMAIN_SHADER = 4,
+		COMPUTE_SHADER = 5
 	};
 
 private:
@@ -25,6 +26,8 @@ private:
 	ID3D11PixelShader *m_PixelShader;	
 	ID3D11HullShader *m_HullShader;
 	ID3D11DomainShader *m_DomainShader;
+	ID3D11ComputeShader *m_ComputeShader;
+
 	ID3D11InputLayout *m_VertexLayout;
 	D3D11_INPUT_ELEMENT_DESC *m_VertexDescription;
 	

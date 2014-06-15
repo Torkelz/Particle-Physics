@@ -139,7 +139,7 @@ void BaseApp::updateDebugInfo()
 
 	std::string speed = "DeltaTime: " + std::to_string(m_DeltaTime) + " FPS: " + std::to_string(1.0f/m_DeltaTime);
 
-	m_Window.setTitle(getGameTitle() + " | " + speed);
+	m_Window.setTitle(getGameTitle() + " | " + speed + " | " + std::to_string(m_ParticleManager->getGPUTime()));
 }
 
 void BaseApp::resetTimer()

@@ -46,9 +46,10 @@ public:
 
 	void Begin(float color[4]);
 	void End(void);
-	void activateRT();
+	void setRT();
 
 	ID3D11DeviceContext * const getDeviceContext();
+	ID3D11Device * const getDevice();
 
 private:
 	HRESULT createDeviceAndSwapChain(HWND p_Hwnd, int p_ScreenWidth, int p_ScreenHeight, bool p_Fullscreen);

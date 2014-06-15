@@ -77,7 +77,7 @@ Shader *WrapperFactory::createShader(LPCWSTR p_Filename, D3D_SHADER_MACRO *p_Def
 
 	try
 	{
-		for(int i = 0; i < 5; i++)
+		for(int i = 0; i < 6; i++)
 		{
 			if(p_Type & ShaderType((int)std::pow(2,i)))
 			{
@@ -121,7 +121,7 @@ Shader *WrapperFactory::createShader(LPCWSTR p_Filename, D3D_SHADER_MACRO *p_Def
 
 	try
 	{
-		for(int i = 0; i < 5; i++)
+		for(int i = 0; i < 6; i++)
 		{
 			if(p_Type & ShaderType((int)std::pow(2,i)))
 			{
@@ -156,7 +156,7 @@ void WrapperFactory::addShaderStep(Shader *p_Shader, LPCWSTR p_Filename, D3D_SHA
 
 	try
 	{
-		for(int i = 0; i < 5; i++)
+		for(int i = 0; i < 6; i++)
 		{
 			if(p_Type & ShaderType((int)std::pow(2,i)))
 			{
@@ -220,6 +220,12 @@ string WrapperFactory::getShaderModel(const char *p_ShaderVersion, Shader::Type 
 	case Shader::Type::DOMAIN_SHADER:
 		{
 			temp = "ds_";
+			temp += p_ShaderVersion;
+			break;
+		}
+	case Shader::Type::COMPUTE_SHADER:
+		{
+			temp = "cs_";
 			temp += p_ShaderVersion;
 			break;
 		}

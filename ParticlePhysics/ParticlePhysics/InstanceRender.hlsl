@@ -8,16 +8,18 @@ cbuffer cb : register(b0)
 
 struct VSLightInput
 {
-	float3	vposition		: POSITION;
-	float3	lightPos		: LPOSITION;
-    float3	lightColor		: COLOR;
-    float	lightRange		: RANGE;
+	float3	vposition	: POSITION;
+	float3	lightPos	: LPOSITION;
+    float3	lightColor	: COLOR;
+    float	lightRange	: RANGE;
 };
 
 struct VSLightOutput
 {
-	float4	vposition		: SV_Position;
-    float3	lightColor		: COLOR;
+	float4	vposition	: SV_Position;
+    float3	lightColor	: COLOR;
+	float3	normal		: NORMAL;
+	float3	wpos		: WPOS;
 };
 
 //############################
@@ -48,6 +50,8 @@ VSLightOutput PointLightVS(VSLightInput input)
 	VSLightOutput output;
 	output.vposition		= mul(projection, mul(view, pos));
 	output.lightColor		= input.lightColor;
+	output.normal = normalize(mul(view, float4(pos - input.lightPos, 0.f)).xyz);
+	output.wpos = pos;
 	return output;
 }
 //############################
@@ -55,5 +59,46 @@ VSLightOutput PointLightVS(VSLightInput input)
 //############################
 float4 PointLightPS(VSLightOutput input) : SV_TARGET
 {
+			float3 light = float3(0,0,50);
+
+			float3 litColor = 0;
+			//The vector from surface to the light
+			float3 lightVec = input.wpos - light;
+			float lightintensity;
+			float3 lightDir;
+			float3 reflection;
+			float3 specular = 1;
+			float3 ambient = float3(0.5,0.5,0.5);
+			float3 diffuse = float3(0.4,0.4,0.4);
+			float shininess = 32;
+
+			//the distance deom surface to light
+			float d = length(lightVec);
+			float fade;
+			if(d > 500)
+					return float4(float3(0.5f, 0.5f, 0.5f) * input.lightColor,1);
+			fade = 1 - (d/ 500);
+			//Normalize light vector
+			lightVec /= d;
+			litColor = ambient.xyz;
+			//Add ambient light term
+        
+			lightintensity = saturate(dot(input.normal, lightVec));
+			litColor += diffuse.xyz * lightintensity;
+			lightDir = -lightVec;
+			if(lightintensity > 0.0f)
+			{
+				float3 viewDir = normalize(light - float3(0,0,50));
+				float3 ref = reflect(-lightDir, normalize(input.normal));
+				float scalar = max(dot(ref, viewDir), 0.0f);
+				float specFac = 1.0f;
+				for(int i = 0; i < shininess;i++)
+					specFac *= scalar;
+				litColor += specular.xyz * specFac;
+			}
+			litColor = litColor * input.lightColor;
+
+			return float4(litColor*fade,1);
+
 	return float4( input.lightColor, 1.0f );
 }

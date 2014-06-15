@@ -17,7 +17,7 @@ Graphics::Graphics(void)
 	m_DepthStencilBuffer = nullptr;
 	m_DepthStencilState = nullptr;
 	m_DepthStencilView = nullptr;
-	m_VSyncEnabled = false;
+	m_VSyncEnabled = true;
 
 	m_WrapperFactory = nullptr;
 }
@@ -201,11 +201,9 @@ void Graphics::End(void)
 	}
 }
 
-void Graphics::activateRT()
+void Graphics::setRT()
 {
 	m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, m_DepthStencilView);
-	m_DeviceContext->RSSetState(m_RasterState);
-	m_DeviceContext->OMSetDepthStencilState(m_DepthStencilState,0);
 }
 
 HRESULT Graphics::createDeviceAndSwapChain(HWND p_Hwnd, int p_ScreenWidth, int p_ScreenHeight,
@@ -272,7 +270,7 @@ HRESULT Graphics::createDeviceAndSwapChain(HWND p_Hwnd, int p_ScreenWidth, int p
 	// Set the feature level to DirectX 11.
 	featureLevel = D3D_FEATURE_LEVEL_11_0;
 
-	return D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1, 
+	return D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, &featureLevel, 1, 
 		D3D11_SDK_VERSION, &swapChainDesc, &m_SwapChain, &m_Device, NULL, &m_DeviceContext);
 }
 
@@ -391,4 +389,9 @@ HRESULT Graphics::createRasterizerState(void)
 ID3D11DeviceContext * const Graphics::getDeviceContext()
 {
 	return m_DeviceContext;
+}
+
+ID3D11Device * const Graphics::getDevice()
+{
+	return m_Device;
 }

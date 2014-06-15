@@ -21,7 +21,7 @@ ComputeShader::ComputeShader()
 
 ComputeShader::~ComputeShader()
 {
-	SAFE_RELEASE(mD3DDevice);
+	//SAFE_RELEASE(mD3DDevice);
 }
 
 bool ComputeShader::Init(TCHAR* shaderFile, char* blobFileAppendix, char* pFunctionName, D3D10_SHADER_MACRO* pDefines,
@@ -42,7 +42,7 @@ bool ComputeShader::Init(TCHAR* shaderFile, char* blobFileAppendix, char* pFunct
 	dwShaderFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL0;
 #endif
 
-	hr = D3DCompileFromFile(shaderFile, pDefines, NULL, pFunctionName, "cs_5_0", 
+	hr = D3DCompileFromFile(shaderFile, pDefines, D3D_COMPILE_STANDARD_FILE_INCLUDE, pFunctionName, "cs_5_0", 
 		dwShaderFlags, NULL, &pCompiledShader, &pErrorBlob);
 
 	if (pErrorBlob)
@@ -123,7 +123,7 @@ ID3D11Buffer* ComputeWrap::CreateStructuredBuffer(UINT uElementSize, UINT uCount
     D3D11_BUFFER_DESC desc;
     ZeroMemory( &desc, sizeof(desc) );
     desc.BindFlags = 0;
-	
+
 	if(bUAV)	desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 	if(bSRV)	desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
     

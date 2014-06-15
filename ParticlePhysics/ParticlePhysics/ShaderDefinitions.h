@@ -7,7 +7,8 @@ enum class ShaderType
 	PIXEL_SHADER = 2,
 	GEOMETRY_SHADER = 4,
 	HULL_SHADER = 8,
-	DOMAIN_SHADER = 16
+	DOMAIN_SHADER = 16,
+	COMPUTE_SHADER = 32
 };
 inline bool operator&(ShaderType a, ShaderType b)
 {

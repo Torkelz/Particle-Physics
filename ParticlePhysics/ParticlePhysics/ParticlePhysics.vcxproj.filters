@@ -45,6 +45,9 @@
     <ClCompile Include="WrapperFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GPUTimer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -89,9 +92,13 @@
     <ClInclude Include="ShaderDefinitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GPUTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="InstanceRender.hlsl" />
+    <FxCompile Include="ComputeShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Structs.hlsli" />
