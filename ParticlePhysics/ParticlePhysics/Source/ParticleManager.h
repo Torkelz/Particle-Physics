@@ -13,7 +13,23 @@ typedef DirectX::XMFLOAT3 float3;
 //typedef DirectX::XMFLOAT2 float2;
 //typedef DirectX::XMFLOAT4X4 float4x4;
 
-#include "Structs.hlsli"
+struct ParticlePhysics
+{
+	float3 m_Position;
+	float3 m_Velocity;
+	float3 m_Acceleration;
+	float3 m_Forces;
+	float3 m_Impulses;
+	float m_Mass;
+};
+
+
+struct Particle
+{
+	float3 m_Position;
+	float3 m_Color;
+	float m_Scale;
+};
 
 
 class ParticleManager
