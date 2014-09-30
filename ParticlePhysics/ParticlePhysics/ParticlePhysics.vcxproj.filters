@@ -15,92 +15,92 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
+    <ClCompile Include="Source/BaseApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics.cpp">
+    <ClCompile Include="Source/Buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BaseApp.cpp">
+    <ClCompile Include="Source/ComputeHelp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
+    <ClCompile Include="Source/GPUTimer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParticleManager.cpp">
+    <ClCompile Include="Source/Graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ComputeHelp.cpp">
+    <ClCompile Include="Source/Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ModelBinaryLoader.cpp">
+    <ClCompile Include="Source/ModelBinaryLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
+    <ClCompile Include="Source/ParticleManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Buffer.cpp">
+    <ClCompile Include="Source/Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WrapperFactory.cpp">
+    <ClCompile Include="Source/Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GPUTimer.cpp">
+    <ClCompile Include="Source/WrapperFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Graphics.h">
+    <ClInclude Include="Source/BaseApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities.h">
+    <ClInclude Include="Source/Buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BaseApp.h">
+    <ClInclude Include="Source/ComputeHelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
+    <ClInclude Include="Source/GPUTimer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UserExceptions.h">
+    <ClInclude Include="Source/Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ParticleManager.h">
+    <ClInclude Include="Source/Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ComputeHelp.h">
+    <ClInclude Include="Source/ShaderDefinitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="Source/ShaderStructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ModelBinaryLoader.h">
+    <ClInclude Include="Source/ModelBinaryLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderStructs.h">
+    <ClInclude Include="Source/ParticleManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
+    <ClInclude Include="Source/resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Buffer.h">
+    <ClInclude Include="Source/UserExceptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WrapperFactory.h">
+    <ClInclude Include="Source/Utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderDefinitions.h">
+    <ClInclude Include="Source/Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GPUTimer.h">
+    <ClInclude Include="Source/WrapperFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="InstanceRender.hlsl" />
-    <FxCompile Include="ComputeShader.hlsl" />
+    <FxCompile Include="Source/ComputeShader.hlsl" />
+    <FxCompile Include="Source/InstanceRender.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Structs.hlsli" />
+    <None Include="Source/Structs.hlsli" />
   </ItemGroup>
 </Project>

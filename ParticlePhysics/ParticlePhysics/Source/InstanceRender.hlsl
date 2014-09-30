@@ -50,8 +50,8 @@ VSLightOutput PointLightVS(VSLightInput input)
 	VSLightOutput output;
 	output.vposition		= mul(projection, mul(view, pos));
 	output.lightColor		= input.lightColor;
-	output.normal = normalize(mul(view, float4(pos - input.lightPos, 0.f)).xyz);
-	output.wpos = pos;
+	output.normal = normalize(mul(view, float4(pos.xyz - input.lightPos, 0.f)).xyz);
+	output.wpos = pos.xyz;
 	return output;
 }
 //############################

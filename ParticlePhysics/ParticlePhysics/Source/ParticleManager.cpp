@@ -202,13 +202,13 @@ void ParticleManager::createShaders()
 		{"RANGE",		0, Format::R32_FLOAT,		1, 24, D3D11_INPUT_PER_INSTANCE_DATA, 1},
 	};
 
-	m_InstanceRender = WrapperFactory::getInstance()->createShader(L"./InstanceRender.hlsl", nullptr,
+	m_InstanceRender = WrapperFactory::getInstance()->createShader(L"./Source/InstanceRender.hlsl", nullptr,
 		"PointLightVS,PointLightPS", "5_0",ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER, shaderDesc, 4);
 
 
 	m_ComputeSys = new ComputeWrap(m_Graphics->getDevice(), m_Graphics->getDeviceContext());
 
-	m_ComputeShader = m_ComputeSys->CreateComputeShader(_T("./ComputeShader.hlsl"), nullptr, "main", nullptr);
+	m_ComputeShader = m_ComputeSys->CreateComputeShader(_T("./Source/ComputeShader.hlsl"), nullptr, "main", nullptr);
 }
 
 void ParticleManager::createRenderStates()

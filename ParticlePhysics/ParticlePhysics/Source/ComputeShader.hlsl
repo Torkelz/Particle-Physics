@@ -19,7 +19,7 @@ void main( uint3 ThreadID : SV_DispatchThreadID )
 	m_Particles.GetDimensions(dimension, stride);
 
 
-	for(int pIndex = ThreadID.x; pIndex < dimension; pIndex += nrThreads)
+	for(unsigned int pIndex = ThreadID.x; pIndex < dimension; pIndex += nrThreads)
 	{
 		ParticlePhysics p = m_Particles[pIndex];
 
