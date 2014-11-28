@@ -206,6 +206,11 @@ void Graphics::setRT()
 	m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, m_DepthStencilView);
 }
 
+void Graphics::unsetRT()
+{
+	m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, NULL);
+}
+
 HRESULT Graphics::createDeviceAndSwapChain(HWND p_Hwnd, int p_ScreenWidth, int p_ScreenHeight,
 										   bool p_Fullscreen)
 {
@@ -309,7 +314,7 @@ HRESULT Graphics::createDepthStencilBuffer(int p_ScreenWidth, int p_ScreenHeight
 	depthBufferDesc.Height = p_ScreenHeight;
 	depthBufferDesc.MipLevels = 1;
 	depthBufferDesc.ArraySize = 1;
-	depthBufferDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;// DXGI_FORMAT_R24G8_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthBufferDesc.SampleDesc.Count = 1;
 	depthBufferDesc.SampleDesc.Quality = 0;
 	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -360,7 +365,7 @@ HRESULT Graphics::createDepthStencilView(void)
 	ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
 
 	//Set up the depth stencil view description.
-	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;// DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDesc.Texture2D.MipSlice = 0;
 
@@ -394,4 +399,19 @@ ID3D11DeviceContext * const Graphics::getDeviceContext()
 ID3D11Device * const Graphics::getDevice()
 {
 	return m_Device;
+}
+
+ID3D11Texture2D *Graphics::getDepthTexture()
+{
+	return m_DepthStencilBuffer;
+}
+
+ID3D11RenderTargetView *Graphics::getRTV()
+{
+	return m_RenderTargetView;
+}
+
+ID3D11DepthStencilView *Graphics::getDSV()
+{
+	return m_DepthStencilView;
 }

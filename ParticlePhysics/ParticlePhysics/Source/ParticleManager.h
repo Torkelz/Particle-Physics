@@ -39,6 +39,7 @@ private:
 	{
 		DirectX::XMFLOAT4X4 m_View;
 		DirectX::XMFLOAT4X4 m_Projection;
+		DirectX::XMFLOAT4X4 m_InverseProjection;
 	};
 
 	Graphics *m_Graphics;
@@ -49,15 +50,24 @@ private:
 	Shader *m_InstanceRender;
 	ID3D11DepthStencilState	*m_DepthStencilState;
 	ID3D11RasterizerState *m_RasterState;
+	ID3D11RenderTargetView *m_Depth;
+	ID3D11ShaderResourceView *m_DepthSRV;
+
 
 	ComputeWrap *m_ComputeSys;
 	ComputeShader *m_ComputeShader;
 	ComputeBuffer *m_ComputeBuffer;
+	ComputeBuffer *m_ComputeAppendBuffer;
 
 	GPUTimer *m_Timer;
 
 	std::vector<Particle> m_Particles;
 	std::vector<ParticlePhysics> m_ParticlesPhysics;
+
+	unsigned int numActiveElements;
+
+	ID3D11Texture2D *m_DepthStencilBuffer;
+	ID3D11ShaderResourceView *m_DepthView;
 
 public:
 	ParticleManager(Graphics *p_Graphics);
@@ -72,11 +82,15 @@ public:
 	void updateCameraInformation(DirectX::XMFLOAT4X4 &p_View, DirectX::XMFLOAT4X4 &p_Projection);
 
 	float getGPUTime();
+	unsigned int getNumParticles();
 
 private:
 	void loadBallModel();
 	void createShaders();
 
 	void createRenderStates();
+
+	ID3D11RenderTargetView *createRenderTarget(D3D11_TEXTURE2D_DESC &desc);
+	ID3D11ShaderResourceView *createShaderResourceView(D3D11_TEXTURE2D_DESC &desc, ID3D11RenderTargetView *p_Rendertarget);
 };
 

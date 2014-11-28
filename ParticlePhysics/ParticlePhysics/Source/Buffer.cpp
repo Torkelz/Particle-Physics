@@ -146,6 +146,13 @@ HRESULT Buffer::initialize(ID3D11Device *p_Device, ID3D11DeviceContext *p_Device
 			bufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
 			break;
 		}
+	case Usage::STAGING:
+	{
+		bufferDescription.BindFlags |= 0;
+		bufferDescription.Usage = D3D11_USAGE_STAGING;
+		bufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		break;
+	}
 	default:
 		{
 			break;
