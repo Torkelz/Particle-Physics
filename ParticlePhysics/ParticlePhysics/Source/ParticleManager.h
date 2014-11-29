@@ -28,7 +28,7 @@ struct Particle
 {
 	float3 m_Position;
 	float3 m_Color;
-	float m_Scale;
+	float m_Radius;
 };
 
 
@@ -39,7 +39,6 @@ private:
 	{
 		DirectX::XMFLOAT4X4 m_View;
 		DirectX::XMFLOAT4X4 m_Projection;
-		DirectX::XMFLOAT4X4 m_InverseProjection;
 	};
 
 	Graphics *m_Graphics;
@@ -68,6 +67,14 @@ private:
 
 	ID3D11Texture2D *m_DepthStencilBuffer;
 	ID3D11ShaderResourceView *m_DepthView;
+
+
+
+	Shader* m_Particle;
+	Buffer* m_PBuffer;
+	ID3D11ShaderResourceView* m_Texture;
+	ID3D11SamplerState* m_SamplerState;
+	ID3D11BlendState* m_Blend;
 
 public:
 	ParticleManager(Graphics *p_Graphics);

@@ -4,6 +4,9 @@
 #include "Utilities.h"
 #include "Window.h"
 #include "UserExceptions.h"
+
+#include "WICTextureLoader.h"
+
 #include <random>
 
 
@@ -61,8 +64,8 @@ void ParticleManager::init()
 	std::uniform_real_distribution<float> color(0.f,1.f);
 	std::uniform_real_distribution<float> position(-30.f,30.f);
 
-	p.m_Scale = 2;
-	numActiveElements = 50000;
+	p.m_Radius = 1;
+	numActiveElements = 500000;
 	for (unsigned int i = 0; i < numActiveElements; i++)
 	{
 		p.m_Position = DirectX::XMFLOAT3(position(generator),position(generator),position(generator));
@@ -121,6 +124,44 @@ void ParticleManager::init()
 
 	m_Depth = createRenderTarget(desc);
 	m_DepthSRV = createShaderResourceView(desc, m_Depth);
+	
+
+	cbdesc.sizeOfElement = sizeof(Particle);
+	cbdesc.type = Buffer::Type::VERTEX_BUFFER;
+	cbdesc.usage = Buffer::Usage::CPU_WRITE;
+	cbdesc.initData = m_Particles.data();
+	cbdesc.numOfElements = m_Particles.size();
+	m_ParticleRenderData = WrapperFactory::getInstance()->createBuffer(cbdesc);
+
+	m_PBuffer = WrapperFactory::getInstance()->createBuffer(cbdesc);
+
+	DirectX::CreateWICTextureFromFile(m_Graphics->getDevice(), m_Graphics->getDeviceContext(), L".\\Depthmap.png", nullptr, &m_Texture);
+
+	D3D11_SAMPLER_DESC sd;
+	ZeroMemory(&sd, sizeof(sd));
+	sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sd.MinLOD = 0;
+	sd.MaxLOD = D3D11_FLOAT32_MAX;
+	m_Graphics->getDevice()->CreateSamplerState(&sd, &m_SamplerState);
+
+	D3D11_BLEND_DESC bd;
+	bd.AlphaToCoverageEnable = false;
+	bd.IndependentBlendEnable = false;
+	bd.RenderTarget[0].BlendEnable = true;
+	bd.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	bd.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	bd.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	bd.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+	bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	m_Graphics->getDevice()->CreateBlendState(&bd, &m_Blend);
+
+	int dummy = 0;
 }
 
 void ParticleManager::update(float p_Dt)
@@ -133,7 +174,7 @@ void ParticleManager::update(float p_Dt)
 	static ID3D11ShaderResourceView* srv[] = { m_DepthView };
 	static ID3D11ShaderResourceView* nullsrv[] = { 0 };
 
-	m_Timer->Start();
+	//m_Timer->Start();
 	m_ComputeShader->Set();
 	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(0, 1, cbUAV, NULL);
 	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(1, 1, cabUAV, initialUAV);
@@ -147,77 +188,96 @@ void ParticleManager::update(float p_Dt)
 	m_Constant->unsetBuffer(1);
 	m_Graphics->getDeviceContext()->CSSetShaderResources(0, 1, nullsrv);
 
-	//m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(0, 2, nullUAVs, NULL);
+	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(0, 2, nullUAVs, NULL);
 
-	//m_ComputeBuffer->CopyToStaging();
+	m_ComputeBuffer->CopyToStaging();
 
-	//D3D11_MAPPED_SUBRESOURCE particle;
-	//m_Graphics->getDeviceContext()->Map(m_ParticleRenderData->getBufferPointer(), NULL, D3D11_MAP_WRITE_NO_OVERWRITE, NULL, &particle);
+	D3D11_MAPPED_SUBRESOURCE particle;
+	m_Graphics->getDeviceContext()->Map(m_ParticleRenderData->getBufferPointer(), NULL, D3D11_MAP_WRITE_NO_OVERWRITE, NULL, &particle);
 
-	//Particle *ptr = (Particle *)particle.pData;
-	//ParticlePhysics *pPhysics = m_ComputeBuffer->Map<ParticlePhysics>();
-	//
-	//for(unsigned int j = 0; j < m_Particles.size(); j++)
-	//{
-	//	ptr->m_Position = pPhysics->m_Position;
-	//	ptr++;
-	//	pPhysics++;
-	//}
+	Particle *ptr = (Particle *)particle.pData;
+	ParticlePhysics *pPhysics = m_ComputeBuffer->Map<ParticlePhysics>();
+	
+	for(unsigned int j = 0; j < m_Particles.size(); j++)
+	{
+		ptr->m_Position = pPhysics->m_Position;
+		ptr++;
+		pPhysics++;
+	}
 
-	//m_Graphics->getDeviceContext()->Unmap(m_ParticleRenderData->getBufferPointer(), NULL);
-	//m_ComputeBuffer->Unmap();
+	m_Graphics->getDeviceContext()->Unmap(m_ParticleRenderData->getBufferPointer(), NULL);
+	m_ComputeBuffer->Unmap();
 	
 	//m_Graphics->getDeviceContext()->CopyStructureCount(m_ComputeAppendBuffer->GetStaging(), 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
 	//m_ComputeAppendBuffer->CopyToStaging();
-	m_Graphics->getDeviceContext()->CopyResource(m_ParticleRenderData->getBufferPointer(), m_ComputeAppendBuffer->GetResource());
+	//m_Graphics->getDeviceContext()->CopyResource(m_ParticleRenderData->getBufferPointer(), m_ComputeAppendBuffer->GetResource());
 
-	m_Graphics->getDeviceContext()->CopyStructureCount(m_ComputeAppendBuffer->GetStaging(), 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
-	D3D11_MAPPED_SUBRESOURCE subresource;
-	m_Graphics->getDeviceContext()->Map(m_ComputeAppendBuffer->GetStaging(), 0, D3D11_MAP_READ, 0, &subresource);
-	numActiveElements = *(unsigned int*)subresource.pData;
-	m_Graphics->getDeviceContext()->Unmap(m_ComputeAppendBuffer->GetStaging(), 0);
+	//m_Graphics->getDeviceContext()->CopyStructureCount(m_ComputeAppendBuffer->GetStaging(), 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
+	//D3D11_MAPPED_SUBRESOURCE subresource;
+	//m_Graphics->getDeviceContext()->Map(m_ComputeAppendBuffer->GetStaging(), 0, D3D11_MAP_READ, 0, &subresource);
+	//numActiveElements = *(unsigned int*)subresource.pData;
+	//m_Graphics->getDeviceContext()->Unmap(m_ComputeAppendBuffer->GetStaging(), 0);
 
-	if (numActiveElements < 50000)
-		int dummy = 0;
+	//if (numActiveElements < 50000)
+	//	int dummy = 0;
 
 
-	m_Timer->Stop();
+	//m_Timer->Stop();
 }
 
 void ParticleManager::render()
 {
-	//m_Graphics->setRT();
-	ID3D11RenderTargetView *rtv[] = { m_Graphics->getRTV(), m_Depth };
-	ID3D11RenderTargetView *nullrtv[] = { 0,0 };
+	////m_Graphics->setRT();
+	//ID3D11RenderTargetView *rtv[] = { m_Graphics->getRTV(), m_Depth };
+	//ID3D11RenderTargetView *nullrtv[] = { 0,0 };
 
-	m_Graphics->getDeviceContext()->OMSetRenderTargets(2, rtv, m_Graphics->getDSV());
-	m_Graphics->getDeviceContext()->RSSetState(m_RasterState);
-	m_Graphics->getDeviceContext()->OMSetDepthStencilState(m_DepthStencilState,0);
-	m_Graphics->getDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//m_Graphics->getDeviceContext()->OMSetRenderTargets(2, rtv, m_Graphics->getDSV());
+	//m_Graphics->getDeviceContext()->RSSetState(m_RasterState);
+	//m_Graphics->getDeviceContext()->OMSetDepthStencilState(m_DepthStencilState,0);
+	//m_Graphics->getDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	//m_Constant->setBuffer(0);
+
+	//UINT Offsets[2] = {0,0};
+	//ID3D11Buffer * buffers[] = {m_BallModel->getBufferPointer(), m_ParticleRenderData->getBufferPointer()};
+	//UINT Stride[2] = {sizeof(DirectX::XMFLOAT3), sizeof(Particle)};
+
+	//m_InstanceRender->setShader();
+	//m_Graphics->getDeviceContext()->IASetVertexBuffers(0,2,buffers,Stride, Offsets);
+
+	////static const unsigned int countPerInstance = 1000;
+	////unsigned int nrCalls = m_Particles.size() / countPerInstance;
+	////for (unsigned int i = 0; i < nrCalls; ++i)
+	//if (numActiveElements > 0)
+	//	m_Graphics->getDeviceContext()->DrawInstanced(m_BallModel->getNumOfElements(), numActiveElements, 0, 0);
+
+	//ID3D11Buffer* nullBuffers[] = { nullptr, nullptr };
+	//m_Graphics->getDeviceContext()->IASetVertexBuffers(0, 2, nullBuffers, Stride, Offsets);
+	//m_InstanceRender->unSetShader();
+	//m_Constant->unsetBuffer(0);
+
+	//m_Graphics->getDeviceContext()->OMSetRenderTargets(2, nullrtv, NULL);
+	////m_Graphics->unsetRT();
+	//m_Graphics->getDeviceContext()->CopyResource(m_DepthStencilBuffer, m_Graphics->getDepthTexture());
+	m_Graphics->setRT();
+	//m_Graphics->getDeviceContext()->RSSetState(m_RasterState);
+	//m_Graphics->getDeviceContext()->OMSetDepthStencilState(m_DepthStencilState, 0);
+	m_Graphics->getDeviceContext()->PSSetShaderResources(0, 1, &m_Texture);
+	m_Graphics->getDeviceContext()->PSSetSamplers(0, 1, &m_SamplerState);
+	m_Graphics->getDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	m_Constant->setBuffer(0);
+	m_ParticleRenderData->setBuffer(0);
+	m_Particle->setShader();
+	static float tt[4] = {0,0,0,0};
+	m_Particle->setBlendState(m_Blend, tt);
 
-	UINT Offsets[2] = {0,0};
-	ID3D11Buffer * buffers[] = {m_BallModel->getBufferPointer(), m_ParticleRenderData->getBufferPointer()};
-	UINT Stride[2] = {sizeof(DirectX::XMFLOAT3), sizeof(Particle)};
+	m_Graphics->getDeviceContext()->Draw(m_Particles.size(), 0);
 
-	m_InstanceRender->setShader();
-	m_Graphics->getDeviceContext()->IASetVertexBuffers(0,2,buffers,Stride, Offsets);
-
-	//static const unsigned int countPerInstance = 1000;
-	//unsigned int nrCalls = m_Particles.size() / countPerInstance;
-	//for (unsigned int i = 0; i < nrCalls; ++i)
-	if (numActiveElements > 0)
-		m_Graphics->getDeviceContext()->DrawInstanced(m_BallModel->getNumOfElements(), numActiveElements, 0, 0);
-
-	ID3D11Buffer* nullBuffers[] = { nullptr, nullptr };
-	m_Graphics->getDeviceContext()->IASetVertexBuffers(0, 2, nullBuffers, Stride, Offsets);
-	m_InstanceRender->unSetShader();
+	m_Particle->unSetShader();
+	m_ParticleRenderData->unsetBuffer(0);
 	m_Constant->unsetBuffer(0);
+	m_Graphics->unsetRT();
 
-	m_Graphics->getDeviceContext()->OMSetRenderTargets(2, nullrtv, NULL);
-	//m_Graphics->unsetRT();
-	m_Graphics->getDeviceContext()->CopyResource(m_DepthStencilBuffer, m_Graphics->getDepthTexture());
 }
 
 void ParticleManager::updateCameraInformation(DirectX::XMFLOAT4X4 &p_View, DirectX::XMFLOAT4X4 &p_Projection)
@@ -225,7 +285,6 @@ void ParticleManager::updateCameraInformation(DirectX::XMFLOAT4X4 &p_View, Direc
 	constantBuffer cb;
 	cb.m_View = p_View;
 	cb.m_Projection = p_Projection;
-	XMStoreFloat4x4(&cb.m_InverseProjection, XMMatrixInverse(nullptr, XMLoadFloat4x4(&p_Projection)));
 
 	m_Graphics->getDeviceContext()->UpdateSubresource(m_Constant->getBufferPointer(), NULL,NULL, &cb,NULL,NULL);
 }
@@ -276,6 +335,9 @@ void ParticleManager::createShaders()
 	m_ComputeSys = new ComputeWrap(m_Graphics->getDevice(), m_Graphics->getDeviceContext());
 
 	m_ComputeShader = m_ComputeSys->CreateComputeShader(_T("Bin/assets/shaders/ComputeShader.hlsl"), nullptr, "main", nullptr);
+
+	m_Particle = WrapperFactory::getInstance()->createShader(L"PixelShader.hlsl", "VS,PS,GS", "5_0", ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER | ShaderType::GEOMETRY_SHADER);
+	int dummy = 0;
 }
 
 void ParticleManager::createRenderStates()
