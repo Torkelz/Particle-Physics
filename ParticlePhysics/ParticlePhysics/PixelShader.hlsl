@@ -144,7 +144,7 @@ Lighting GetPointLight(PointLight light, float3 pos3D, float3 viewDir, float3 no
 float4 PS(PSIn p_input) : SV_TARGET
 {
 	float4 temp = m_texture.Sample(m_textureSampler, p_input.uvCoord);
-	if (temp.w < 0.5f)
+	if (temp.w < 0.2f)
 		discard;
 
 	//return float4(p_input.color.xyz, temp.w);
@@ -164,7 +164,7 @@ float4 PS(PSIn p_input) : SV_TARGET
 		float3 surfacePosition = endPos + p_input.wposition;
 
 		PointLight pl;
-	pl.position = float3(0, 10, 50);
+	pl.position = float3(0, 0, 0);
 	pl.diffuseColor = float3(0.4f, 0.4f, 0.4f);
 	pl.diffusePower = 200;
 	pl.specularColor = float3(1, 1, 1);;
@@ -192,14 +192,14 @@ float4 PS(PSIn p_input) : SV_TARGET
 
 	float3 L = pl.position - surfacePosition;
 	float dist = length(L);
-	float attenuation = max(0.f, 1.f - (dist / 100));
+	//float attenuation = max(0.f, 1.f - (dist / 1000));
 	L /= dist;
 	
-	if (attenuation == 0.f)
-		return float4(float3(0.2f, 0.2f, 0.2f) *p_input.color, temp.w);
+	//if (attenuation == 0.f)
+	//	return float4(float3(0.2f, 0.2f, 0.2f) *p_input.color, temp.w);
 
 	float nDotL = saturate(dot(normal, L));
 	float3 diffuse = nDotL *pl.diffuseColor * p_input.color;
 		// Final value is the sum of the albedo and diffuse with attenuation applied
-		return float4(saturate(diffuse * attenuation + float3(0.2f, 0.2f, 0.2f) *p_input.color), temp.w);
+		return float4(saturate(diffuse + float3(0.2f, 0.2f, 0.2f) *p_input.color), temp.w);
 }

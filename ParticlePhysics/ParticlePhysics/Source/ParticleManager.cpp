@@ -65,7 +65,7 @@ void ParticleManager::init()
 	std::uniform_real_distribution<float> position(-30.f,30.f);
 
 	p.m_Radius = 1;
-	numActiveElements = 500000;
+	numActiveElements = 5000;
 	for (unsigned int i = 0; i < numActiveElements; i++)
 	{
 		p.m_Position = DirectX::XMFLOAT3(position(generator),position(generator),position(generator));
@@ -126,12 +126,12 @@ void ParticleManager::init()
 	m_DepthSRV = createShaderResourceView(desc, m_Depth);
 	
 
-	cbdesc.sizeOfElement = sizeof(Particle);
-	cbdesc.type = Buffer::Type::VERTEX_BUFFER;
-	cbdesc.usage = Buffer::Usage::CPU_WRITE;
-	cbdesc.initData = m_Particles.data();
-	cbdesc.numOfElements = m_Particles.size();
-	m_ParticleRenderData = WrapperFactory::getInstance()->createBuffer(cbdesc);
+	//cbdesc.sizeOfElement = sizeof(Particle);
+	//cbdesc.type = Buffer::Type::VERTEX_BUFFER;
+	//cbdesc.usage = Buffer::Usage::CPU_WRITE;
+	//cbdesc.initData = m_Particles.data();
+	//cbdesc.numOfElements = m_Particles.size();
+	//m_ParticleRenderData = WrapperFactory::getInstance()->createBuffer(cbdesc);
 
 	m_PBuffer = WrapperFactory::getInstance()->createBuffer(cbdesc);
 
@@ -158,6 +158,7 @@ void ParticleManager::init()
 	bd.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
 	bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 	bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+
 	bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	m_Graphics->getDevice()->CreateBlendState(&bd, &m_Blend);
 
@@ -192,25 +193,25 @@ void ParticleManager::update(float p_Dt)
 
 	m_ComputeBuffer->CopyToStaging();
 
-	D3D11_MAPPED_SUBRESOURCE particle;
-	m_Graphics->getDeviceContext()->Map(m_ParticleRenderData->getBufferPointer(), NULL, D3D11_MAP_WRITE_NO_OVERWRITE, NULL, &particle);
+	//D3D11_MAPPED_SUBRESOURCE particle;
+	//m_Graphics->getDeviceContext()->Map(m_ParticleRenderData->getBufferPointer(), NULL, D3D11_MAP_WRITE_NO_OVERWRITE, NULL, &particle);
 
-	Particle *ptr = (Particle *)particle.pData;
-	ParticlePhysics *pPhysics = m_ComputeBuffer->Map<ParticlePhysics>();
-	
-	for(unsigned int j = 0; j < m_Particles.size(); j++)
-	{
-		ptr->m_Position = pPhysics->m_Position;
-		ptr++;
-		pPhysics++;
-	}
+	//Particle *ptr = (Particle *)particle.pData;
+	//ParticlePhysics *pPhysics = m_ComputeBuffer->Map<ParticlePhysics>();
+	//
+	//for(unsigned int j = 0; j < m_Particles.size(); j++)
+	//{
+	//	ptr->m_Position = pPhysics->m_Position;
+	//	ptr++;
+	//	pPhysics++;
+	//}
 
-	m_Graphics->getDeviceContext()->Unmap(m_ParticleRenderData->getBufferPointer(), NULL);
-	m_ComputeBuffer->Unmap();
+	//m_Graphics->getDeviceContext()->Unmap(m_ParticleRenderData->getBufferPointer(), NULL);
+	//m_ComputeBuffer->Unmap();
 	
 	//m_Graphics->getDeviceContext()->CopyStructureCount(m_ComputeAppendBuffer->GetStaging(), 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
-	//m_ComputeAppendBuffer->CopyToStaging();
-	//m_Graphics->getDeviceContext()->CopyResource(m_ParticleRenderData->getBufferPointer(), m_ComputeAppendBuffer->GetResource());
+	m_ComputeAppendBuffer->CopyToStaging();
+	m_Graphics->getDeviceContext()->CopyResource(m_ParticleRenderData->getBufferPointer(), m_ComputeAppendBuffer->GetResource());
 
 	//m_Graphics->getDeviceContext()->CopyStructureCount(m_ComputeAppendBuffer->GetStaging(), 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
 	//D3D11_MAPPED_SUBRESOURCE subresource;
@@ -268,8 +269,8 @@ void ParticleManager::render()
 	m_Constant->setBuffer(0);
 	m_ParticleRenderData->setBuffer(0);
 	m_Particle->setShader();
-	static float tt[4] = {0,0,0,0};
-	m_Particle->setBlendState(m_Blend, tt);
+	//static float tt[4] = {0,0,0,0};
+	//m_Particle->setBlendState(m_Blend, tt);
 
 	m_Graphics->getDeviceContext()->Draw(m_Particles.size(), 0);
 
