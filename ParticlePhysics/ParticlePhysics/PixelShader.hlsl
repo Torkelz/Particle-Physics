@@ -27,6 +27,7 @@ cbuffer cb : register(c0)
 {
 	float4x4	view;
 	float4x4	projection;
+	float4x4	inverseprojection;
 };
 
 struct PSIn

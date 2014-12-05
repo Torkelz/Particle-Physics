@@ -317,7 +317,7 @@ HRESULT Graphics::createDepthStencilBuffer(int p_ScreenWidth, int p_ScreenHeight
 	depthBufferDesc.Height = p_ScreenHeight;
 	depthBufferDesc.MipLevels = 1;
 	depthBufferDesc.ArraySize = 1;
-	depthBufferDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;// DXGI_FORMAT_R24G8_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthBufferDesc.SampleDesc.Count = 1;
 	depthBufferDesc.SampleDesc.Quality = 0;
 	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -368,7 +368,7 @@ HRESULT Graphics::createDepthStencilView(void)
 	ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
 
 	//Set up the depth stencil view description.
-	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;// DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDesc.Texture2D.MipSlice = 0;
 

@@ -39,6 +39,7 @@ private:
 	{
 		DirectX::XMFLOAT4X4 m_View;
 		DirectX::XMFLOAT4X4 m_Projection;
+		DirectX::XMFLOAT4X4 m_InverseProjection;
 	};
 
 	Graphics *m_Graphics;

@@ -51,7 +51,7 @@ ParticleManager::~ParticleManager(void)
 
 void ParticleManager::init()
 {
-	loadBallModel();
+	//loadBallModel();
 	createShaders();
 	createRenderStates();
 	m_Timer = new GPUTimer(m_Graphics->getDevice(), m_Graphics->getDeviceContext());
@@ -111,19 +111,19 @@ void ParticleManager::init()
 
 
 
-	D3D11_TEXTURE2D_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-	desc.Width = 1280;
-	desc.Height = 720;
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;;
-	desc.SampleDesc.Count = 1;
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	//D3D11_TEXTURE2D_DESC desc;
+	//ZeroMemory(&desc, sizeof(desc));
+	//desc.Width = 1280;
+	//desc.Height = 720;
+	//desc.MipLevels = 1;
+	//desc.ArraySize = 1;
+	//desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;;
+	//desc.SampleDesc.Count = 1;
+	//desc.Usage = D3D11_USAGE_DEFAULT;
+	//desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
-	m_Depth = createRenderTarget(desc);
-	m_DepthSRV = createShaderResourceView(desc, m_Depth);
+	//m_Depth = createRenderTarget(desc);
+	//m_DepthSRV = createShaderResourceView(desc, m_Depth);
 	
 
 	//cbdesc.sizeOfElement = sizeof(Particle);
@@ -133,7 +133,7 @@ void ParticleManager::init()
 	//cbdesc.numOfElements = m_Particles.size();
 	//m_ParticleRenderData = WrapperFactory::getInstance()->createBuffer(cbdesc);
 
-	m_PBuffer = WrapperFactory::getInstance()->createBuffer(cbdesc);
+	//m_PBuffer = WrapperFactory::getInstance()->createBuffer(cbdesc);
 
 	DirectX::CreateWICTextureFromFile(m_Graphics->getDevice(), m_Graphics->getDeviceContext(), L".\\Depthmap.png", nullptr, &m_Texture);
 
@@ -168,6 +168,7 @@ void ParticleManager::init()
 void ParticleManager::update(float p_Dt)
 {
 	m_Graphics->getDeviceContext()->UpdateSubresource(m_ConstantDeltaTime->getBufferPointer(), NULL,NULL, &p_Dt,NULL,NULL);
+
 	static ID3D11UnorderedAccessView* cbUAV[] = {m_ComputeBuffer->GetUnorderedAccessView()};
 	static ID3D11UnorderedAccessView* cabUAV[] = { m_ComputeAppendBuffer->GetUnorderedAccessView() };
 	static ID3D11UnorderedAccessView* nullUAVs[] = { 0, 0 };
@@ -180,6 +181,7 @@ void ParticleManager::update(float p_Dt)
 	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(0, 1, cbUAV, NULL);
 	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(1, 1, cabUAV, initialUAV);
 	m_Graphics->getDeviceContext()->CSSetShaderResources(0, 1, srv);
+	m_Graphics->getDeviceContext()->CSSetSamplers(0, 1, &m_SamplerState);
 	m_ConstantDeltaTime->setBuffer(0);
 	m_Constant->setBuffer(1);
 
@@ -213,11 +215,11 @@ void ParticleManager::update(float p_Dt)
 	m_ComputeAppendBuffer->CopyToStaging();
 	m_Graphics->getDeviceContext()->CopyResource(m_ParticleRenderData->getBufferPointer(), m_ComputeAppendBuffer->GetResource());
 
-	//m_Graphics->getDeviceContext()->CopyStructureCount(m_ComputeAppendBuffer->GetStaging(), 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
-	//D3D11_MAPPED_SUBRESOURCE subresource;
-	//m_Graphics->getDeviceContext()->Map(m_ComputeAppendBuffer->GetStaging(), 0, D3D11_MAP_READ, 0, &subresource);
-	//numActiveElements = *(unsigned int*)subresource.pData;
-	//m_Graphics->getDeviceContext()->Unmap(m_ComputeAppendBuffer->GetStaging(), 0);
+	m_Graphics->getDeviceContext()->CopyStructureCount(m_ComputeAppendBuffer->GetStaging(), 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
+	D3D11_MAPPED_SUBRESOURCE subresource;
+	m_Graphics->getDeviceContext()->Map(m_ComputeAppendBuffer->GetStaging(), 0, D3D11_MAP_READ, 0, &subresource);
+	numActiveElements = *(unsigned int*)subresource.pData;
+	m_Graphics->getDeviceContext()->Unmap(m_ComputeAppendBuffer->GetStaging(), 0);
 
 	//if (numActiveElements < 50000)
 	//	int dummy = 0;
@@ -272,7 +274,7 @@ void ParticleManager::render()
 	//static float tt[4] = {0,0,0,0};
 	//m_Particle->setBlendState(m_Blend, tt);
 
-	m_Graphics->getDeviceContext()->Draw(m_Particles.size(), 0);
+	m_Graphics->getDeviceContext()->Draw(numActiveElements, 0);
 
 	m_Particle->unSetShader();
 	m_ParticleRenderData->unsetBuffer(0);
@@ -286,6 +288,7 @@ void ParticleManager::updateCameraInformation(DirectX::XMFLOAT4X4 &p_View, Direc
 	constantBuffer cb;
 	cb.m_View = p_View;
 	cb.m_Projection = p_Projection;
+	XMStoreFloat4x4(&cb.m_InverseProjection, XMMatrixInverse(nullptr, XMLoadFloat4x4(&p_Projection)));
 
 	m_Graphics->getDeviceContext()->UpdateSubresource(m_Constant->getBufferPointer(), NULL,NULL, &cb,NULL,NULL);
 }
@@ -298,26 +301,26 @@ float ParticleManager::getGPUTime()
 		return -1.f;
 }
 
-void ParticleManager::loadBallModel()
-{
-	Buffer::Description cbdesc;
-	cbdesc.sizeOfElement = sizeof(DirectX::XMFLOAT3);
-	cbdesc.type = Buffer::Type::VERTEX_BUFFER;
-	cbdesc.usage = Buffer::Usage::USAGE_IMMUTABLE;
-
-	ModelBinaryLoader modelLoader;
-	modelLoader.loadBinaryFile("assets/models/Sphere2.btx");
-	const std::vector<StaticVertex>& vertices = modelLoader.getStaticVertexBuffer();
-	std::vector<DirectX::XMFLOAT3> temp;
-	for(unsigned int i = 0; i < vertices.size(); i++)
-	{
-		temp.push_back(DirectX::XMFLOAT3(vertices.at(i).m_Position.x,vertices.at(i).m_Position.y,vertices.at(i).m_Position.z));
-	}
-
-	cbdesc.initData = temp.data();
-	cbdesc.numOfElements = temp.size();
-	m_BallModel = WrapperFactory::getInstance()->createBuffer(cbdesc);
-}
+//void ParticleManager::loadBallModel()
+//{
+//	Buffer::Description cbdesc;
+//	cbdesc.sizeOfElement = sizeof(DirectX::XMFLOAT3);
+//	cbdesc.type = Buffer::Type::VERTEX_BUFFER;
+//	cbdesc.usage = Buffer::Usage::USAGE_IMMUTABLE;
+//
+//	ModelBinaryLoader modelLoader;
+//	modelLoader.loadBinaryFile("assets/models/Sphere2.btx");
+//	const std::vector<StaticVertex>& vertices = modelLoader.getStaticVertexBuffer();
+//	std::vector<DirectX::XMFLOAT3> temp;
+//	for(unsigned int i = 0; i < vertices.size(); i++)
+//	{
+//		temp.push_back(DirectX::XMFLOAT3(vertices.at(i).m_Position.x,vertices.at(i).m_Position.y,vertices.at(i).m_Position.z));
+//	}
+//
+//	cbdesc.initData = temp.data();
+//	cbdesc.numOfElements = temp.size();
+//	m_BallModel = WrapperFactory::getInstance()->createBuffer(cbdesc);
+//}
 
 void ParticleManager::createShaders()
 {
@@ -392,36 +395,36 @@ void ParticleManager::createRenderStates()
 
 
 
-	D3D11_TEXTURE2D_DESC depthBufferDesc;
+	//D3D11_TEXTURE2D_DESC depthBufferDesc;
 
-	ZeroMemory(&depthBufferDesc, sizeof(depthBufferDesc));
+	//ZeroMemory(&depthBufferDesc, sizeof(depthBufferDesc));
 
 
-	//Set up the description of the depth buffer.
-	depthBufferDesc.Width = 1280;
-	depthBufferDesc.Height = 720;
-	depthBufferDesc.MipLevels = 1;
-	depthBufferDesc.ArraySize = 1;
-	depthBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;// DXGI_FORMAT_R24G8_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthBufferDesc.SampleDesc.Count = 1;
-	depthBufferDesc.SampleDesc.Quality = 0;
-	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-	depthBufferDesc.CPUAccessFlags = 0;
-	depthBufferDesc.MiscFlags = 0;
+	////Set up the description of the depth buffer.
+	//depthBufferDesc.Width = 1280;
+	//depthBufferDesc.Height = 720;
+	//depthBufferDesc.MipLevels = 1;
+	//depthBufferDesc.ArraySize = 1;
+	//depthBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;// DXGI_FORMAT_R24G8_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
+	//depthBufferDesc.SampleDesc.Count = 1;
+	//depthBufferDesc.SampleDesc.Quality = 0;
+	//depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	//depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	//depthBufferDesc.CPUAccessFlags = 0;
+	//depthBufferDesc.MiscFlags = 0;
 
-	//Create the texture for the depth buffer using the filled out description.
-	m_Graphics->getDevice()->CreateTexture2D(&depthBufferDesc, NULL, &m_DepthStencilBuffer);
+	////Create the texture for the depth buffer using the filled out description.
+	//m_Graphics->getDevice()->CreateTexture2D(&depthBufferDesc, NULL, &m_DepthStencilBuffer);
+	
 	D3D11_SHADER_RESOURCE_VIEW_DESC desc = {};
-
 	desc.Format = DXGI_FORMAT_R32_FLOAT;// depthBufferDesc.Format;
 	desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	desc.Texture2D.MipLevels = 1;
 	desc.Texture2D.MostDetailedMip = 0;
 
-
-	HRESULT r = m_Graphics->getDevice()->CreateShaderResourceView(m_DepthStencilBuffer, &desc, &m_DepthView);
-
+	
+	HRESULT r = m_Graphics->getDevice()->CreateShaderResourceView(m_Graphics->getDepthTexture(), &desc, &m_DepthView);
+	int dummy = 0;
 }
 
 unsigned int ParticleManager::getNumParticles()
