@@ -43,16 +43,9 @@ private:
 	};
 
 	Graphics *m_Graphics;
-	Buffer *m_BallModel;
 	Buffer *m_Constant;
 	Buffer *m_ConstantDeltaTime;
-	Buffer *m_ParticleRenderData;
-	Shader *m_InstanceRender;
-	ID3D11DepthStencilState	*m_DepthStencilState;
-	ID3D11RasterizerState *m_RasterState;
-	ID3D11RenderTargetView *m_Depth;
-	ID3D11ShaderResourceView *m_DepthSRV;
-
+	//Shader *m_InstanceRender;
 
 	ComputeWrap *m_ComputeSys;
 	ComputeShader *m_ComputeShader;
@@ -68,14 +61,11 @@ private:
 
 	ID3D11Texture2D *m_DepthStencilBuffer;
 	ID3D11ShaderResourceView *m_DepthView;
-
-
-
+	
 	Shader* m_Particle;
-	Buffer* m_PBuffer;
 	ID3D11ShaderResourceView* m_Texture;
 	ID3D11SamplerState* m_SamplerState;
-	ID3D11BlendState* m_Blend;
+	ID3D11Buffer* m_IndirectBuffer;
 
 public:
 	ParticleManager(Graphics *p_Graphics);

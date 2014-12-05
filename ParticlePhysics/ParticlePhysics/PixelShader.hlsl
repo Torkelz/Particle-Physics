@@ -2,17 +2,29 @@
 SamplerState m_textureSampler : register(s0);
 Texture2D m_texture : register(t0);
 
-struct VSIn
-{
-	float3 position : POSITION;
-	float3 color : COLOR;
-	float radius : RADIUS;
-};
+//struct VSIn
+//{
+//	float3 position : POSITION;
+//	float3 color : COLOR;
+//	float radius : RADIUS;
+//};
 struct GSIn
 {
 	float3 position : POSITION;
 	float4 color : COLOR;
 	float radius : RADIUS;
+};
+struct Particle
+{
+	float3 m_Position;
+	float3 m_Color;
+	float m_Scale;
+};
+
+StructuredBuffer<Particle> Particles : register(t0);
+struct VSIn
+{
+	uint vertexid : SV_VertexID;
 };
 //cbuffer b0 : register(c0)
 //{
@@ -43,9 +55,9 @@ GSIn VS(VSIn input)
 {
 	GSIn res =
 	{
-		input.position,
-		float4(input.color, 1.f),
-		input.radius
+		Particles[input.vertexid].m_Position,
+		float4(Particles[input.vertexid].m_Color, 1.f),
+		Particles[input.vertexid].m_Scale
 	};
 	return res;
 }

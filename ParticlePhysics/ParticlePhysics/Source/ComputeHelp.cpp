@@ -22,6 +22,7 @@ ComputeShader::ComputeShader()
 ComputeShader::~ComputeShader()
 {
 	//SAFE_RELEASE(mD3DDevice);
+	SAFE_RELEASE(mShader);
 }
 
 bool ComputeShader::Init(TCHAR* shaderFile, char* blobFileAppendix, char* pFunctionName, D3D10_SHADER_MACRO* pDefines,
@@ -129,7 +130,7 @@ ID3D11Buffer* ComputeWrap::CreateStructuredBuffer(UINT uElementSize, UINT uCount
     
 	UINT bufferSize = uElementSize * uCount;
 	desc.ByteWidth = bufferSize < 16 ? 16 : bufferSize;
-    desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     desc.StructureByteStride = uElementSize;
 
     if ( pInitData )
