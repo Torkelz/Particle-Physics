@@ -21,6 +21,8 @@ struct ParticlePhysics
 	float3 m_Forces;
 	float3 m_Impulses;
 	float m_Mass;
+	float3 m_Color;
+	float m_Radius;
 };
 
 
@@ -41,6 +43,11 @@ private:
 		DirectX::XMFLOAT4X4 m_Projection;
 		DirectX::XMFLOAT4X4 m_InverseProjection;
 	};
+	struct constantBufferFrame
+	{
+		float m_DT;
+		int m_NrThreads;
+	};
 
 	Graphics *m_Graphics;
 	Buffer *m_Constant;
@@ -54,7 +61,6 @@ private:
 
 	GPUTimer *m_Timer;
 
-	std::vector<Particle> m_Particles;
 	std::vector<ParticlePhysics> m_ParticlesPhysics;
 
 	unsigned int numActiveElements;
@@ -66,6 +72,7 @@ private:
 	ID3D11ShaderResourceView* m_Texture;
 	ID3D11SamplerState* m_SamplerState;
 	ID3D11Buffer* m_IndirectBuffer;
+	ID3D11Buffer* m_StagingBuffer;
 
 public:
 	ParticleManager(Graphics *p_Graphics);

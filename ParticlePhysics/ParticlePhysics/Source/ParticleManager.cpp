@@ -25,7 +25,8 @@ ParticleManager::ParticleManager(Graphics *p_Graphics)
 	m_Particle(nullptr),
 	m_Texture(nullptr),
 	m_SamplerState(nullptr),
-	m_IndirectBuffer(nullptr)
+	m_IndirectBuffer(nullptr),
+	m_StagingBuffer(nullptr)
 {
 }
 
@@ -48,6 +49,7 @@ ParticleManager::~ParticleManager(void)
 	SAFE_RELEASE(m_Texture);
 	SAFE_RELEASE(m_SamplerState);
 	SAFE_RELEASE(m_IndirectBuffer);
+	SAFE_RELEASE(m_StagingBuffer);
 }
 
 void ParticleManager::init()
@@ -56,7 +58,6 @@ void ParticleManager::init()
 	createRenderStates();
 	m_Timer = new GPUTimer(m_Graphics->getDevice(), m_Graphics->getDeviceContext());
 
-	Particle p;
 	ParticlePhysics physics;
 	ZeroMemory(&physics, sizeof(ParticlePhysics));
 
@@ -64,19 +65,16 @@ void ParticleManager::init()
 	std::uniform_real_distribution<float> color(0.f,1.f);
 	std::uniform_real_distribution<float> position(-30.f,30.f);
 
-	p.m_Radius = 1;
-	numActiveElements = 500000;
+	physics.m_Radius = 1;
+	numActiveElements = 1000000;
 	for (unsigned int i = 0; i < numActiveElements; i++)
 	{
-		p.m_Position = DirectX::XMFLOAT3(position(generator),position(generator),position(generator));
-		p.m_Color = DirectX::XMFLOAT3(color(generator),color(generator),color(generator));
-
-		m_Particles.push_back(p);
-
-		physics.m_Position = p.m_Position;
+		physics.m_Position = DirectX::XMFLOAT3(position(generator), position(generator), position(generator));
+		physics.m_Color = DirectX::XMFLOAT3(color(generator), color(generator), color(generator));
+		
 		physics.m_Mass = 1.f;
 		using DirectX::operator*;
-		DirectX::XMStoreFloat3(&physics.m_Forces, DirectX::XMVector3Normalize(-1.0f * DirectX::XMLoadFloat3(&p.m_Position)));
+		DirectX::XMStoreFloat3(&physics.m_Forces, DirectX::XMVector3Normalize(-1.0f * DirectX::XMLoadFloat3(&physics.m_Position)));
 
 		m_ParticlesPhysics.push_back(physics);
 	}
@@ -89,7 +87,7 @@ void ParticleManager::init()
 	cbdesc.type = Buffer::Type::CONSTANT_BUFFER_ALL;
 	m_Constant = WrapperFactory::getInstance()->createBuffer(cbdesc);
 
-	cbdesc.sizeOfElement = sizeof(float);
+	cbdesc.sizeOfElement = sizeof(constantBufferFrame);
 	cbdesc.initData = nullptr;
 	cbdesc.numOfElements = 1;
 	cbdesc.usage = Buffer::Usage::DEFAULT;
@@ -98,8 +96,9 @@ void ParticleManager::init()
 
 	m_ComputeBuffer = m_ComputeSys->CreateBuffer(STRUCTURED_BUFFER, sizeof(ParticlePhysics), m_ParticlesPhysics.size(), false, true, false, m_ParticlesPhysics.data(), true);
 	
-	m_ComputeAppendBuffer = m_ComputeSys->CreateBuffer(STRUCTURED_BUFFER, sizeof(Particle), m_Particles.size(), true, true, true, nullptr, true);
-
+	m_ComputeAppendBuffer = m_ComputeSys->CreateBuffer(STRUCTURED_BUFFER, sizeof(Particle), m_ParticlesPhysics.size(), true, true, true, nullptr, true);
+	m_ParticlesPhysics.clear();
+	m_ParticlesPhysics.shrink_to_fit();
 	DirectX::CreateWICTextureFromFile(m_Graphics->getDevice(), m_Graphics->getDeviceContext(), L".\\Depthmap.png", nullptr, &m_Texture);
 
 	D3D11_SAMPLER_DESC sd;
@@ -128,11 +127,23 @@ void ParticleManager::init()
 	initData.SysMemSlicePitch = 0;
 
 	m_Graphics->getDevice()->CreateBuffer(&bufferDesc, &initData, &m_IndirectBuffer);
+
+	D3D11_BUFFER_DESC desc;
+	desc.ByteWidth = 4;
+	desc.BindFlags = 0;
+	desc.MiscFlags = 0;
+	desc.Usage = D3D11_USAGE_STAGING;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	m_Graphics->getDevice()->CreateBuffer(&desc, nullptr, &m_StagingBuffer);
 }
 
 void ParticleManager::update(float p_Dt)
 {
-	m_Graphics->getDeviceContext()->UpdateSubresource(m_ConstantDeltaTime->getBufferPointer(), NULL,NULL, &p_Dt,NULL,NULL);
+	constantBufferFrame d;
+	d.m_DT = p_Dt;
+	d.m_NrThreads = numActiveElements / 512;
+
+	m_Graphics->getDeviceContext()->UpdateSubresource(m_ConstantDeltaTime->getBufferPointer(), NULL, NULL, &d, NULL, NULL);
 
 	static ID3D11UnorderedAccessView* cbUAV[] = {m_ComputeBuffer->GetUnorderedAccessView()};
 	static ID3D11UnorderedAccessView* cabUAV[] = { m_ComputeAppendBuffer->GetUnorderedAccessView() };
@@ -145,18 +156,27 @@ void ParticleManager::update(float p_Dt)
 	m_ComputeShader->Set();
 	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(0, 1, cbUAV, NULL);
 	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(1, 1, cabUAV, initialUAV);
-	m_Graphics->getDeviceContext()->CSSetShaderResources(0, 1, srv);
+	//m_Graphics->getDeviceContext()->CSSetShaderResources(0, 1, srv);
 	m_Graphics->getDeviceContext()->CSSetSamplers(0, 1, &m_SamplerState);
 	m_ConstantDeltaTime->setBuffer(0);
 	m_Constant->setBuffer(1);
 
-	m_Graphics->getDeviceContext()->Dispatch(4/*32*/,1,1);
+	m_Graphics->getDeviceContext()->Dispatch(d.m_NrThreads/*4/*32*/, 1, 1);
 
 	m_ComputeShader->Unset();
 	m_Constant->unsetBuffer(1);
 	m_Graphics->getDeviceContext()->CSSetShaderResources(0, 1, nullsrv);
 
 	m_Graphics->getDeviceContext()->CSSetUnorderedAccessViews(0, 2, nullUAVs, NULL);
+
+
+	m_Graphics->getDeviceContext()->CopyStructureCount(m_IndirectBuffer, 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
+	m_Graphics->getDeviceContext()->CopyStructureCount(m_StagingBuffer, 0, m_ComputeAppendBuffer->GetUnorderedAccessView());
+	D3D11_MAPPED_SUBRESOURCE subresource;
+	m_Graphics->getDeviceContext()->Map(m_StagingBuffer, 0, D3D11_MAP_READ, 0, &subresource);
+	numActiveElements = *(unsigned int*)subresource.pData;
+	m_Graphics->getDeviceContext()->Unmap(m_StagingBuffer, 0);
+
 	//m_Timer->Stop();
 }
 
@@ -216,7 +236,7 @@ void ParticleManager::createShaders()
 
 	m_ComputeSys = new ComputeWrap(m_Graphics->getDevice(), m_Graphics->getDeviceContext());
 
-	m_ComputeShader = m_ComputeSys->CreateComputeShader(_T("Bin/assets/shaders/ComputeShader.hlsl"), nullptr, "main", nullptr);
+	m_ComputeShader = m_ComputeSys->CreateComputeShader(_T("ComputeShader.hlsl"), nullptr, "main", nullptr);
 
 	m_Particle = WrapperFactory::getInstance()->createShader(L"PixelShader.hlsl", "VS,PS,GS", "5_0", ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER | ShaderType::GEOMETRY_SHADER);
 }

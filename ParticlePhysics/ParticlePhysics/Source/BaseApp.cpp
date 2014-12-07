@@ -60,14 +60,14 @@ void BaseApp::run()
 		updateLogic();
 
 		render();*/
-		//m_ParticleManager->updateCameraInformation(m_View, m_Projection);
+		m_ParticleManager->updateCameraInformation(m_View, m_Projection);
 
 
-		//m_ParticleManager->update(m_DeltaTime);
+		m_ParticleManager->update(m_DeltaTime);
 		float color[] = {0.5f,0.5f,0.5f,1.f};
 		m_Graphics.Begin(color);
 
-		//m_ParticleManager->render();
+		m_ParticleManager->render();
 
 		m_Graphics.End();
 

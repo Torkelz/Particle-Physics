@@ -103,9 +103,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Bin\assets\shaders\ComputeShader.hlsl" />
     <FxCompile Include="Bin\assets\shaders\InstanceRender.hlsl" />
     <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="ComputeShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Bin\assets\shaders\Structs.hlsli" />
